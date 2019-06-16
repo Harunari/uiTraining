@@ -20,8 +20,8 @@ class DraggableObject {
     this.rootSvgElement = svgTarget;
     svgTarget.addEventListener('mousedown', e => this.startDrag(e));
     svgTarget.addEventListener('mousemove', e => this.drag(e));
-    svgTarget.addEventListener('mouseup', e => this.endDrag(e));
-    svgTarget.addEventListener('mouseleave', e => this.endDrag(e));
+    svgTarget.addEventListener('mouseup', () => this.endDrag());
+    svgTarget.addEventListener('mouseleave', () => this.endDrag());
   }
 
   private startDrag(event: Event) {
@@ -45,7 +45,7 @@ class DraggableObject {
     const coordinate = DraggableObject.getMousePostion(<MouseEvent>event, this.rootSvgElement);
     this.transform.setTranslate(coordinate.x - this.offset.x, coordinate.y - this.offset.y);
   }
-  private endDrag(event: Event) {
+  private endDrag() {
     this.selectedElement = null;
   }
   private static getMousePostion(event: MouseEvent, selectedElement: Element): ICoordinate {
