@@ -1,75 +1,76 @@
 "use strict";
-window.onload = function () {
-    // const draggableObjects = document.getElementsByClassName("draggable");
-    // for (let i = 0; i < draggableObjects.length; i++) {
-    //   let element: Element = draggableObjects[i];
-    //   new DraggableObject(<EventTarget>element)
-    // }
-};
+window.onload = () => { };
 function makeDraggable(evt) {
     new DraggableObject(evt.target);
 }
-var DraggableObject = /** @class */ (function () {
-    function DraggableObject(svgTarget) {
-        this.rootSvgElement = null;
+class DraggableObject {
+    constructor(svgTarget) {
         this.selectedElement = null;
         this.offset = { x: 0, y: 0 };
-        svgTarget.addEventListener('mousedown', this.startDrag);
-        svgTarget.addEventListener('mousemove', this.drag);
-        svgTarget.addEventListener('mouseup', this.endDrag);
-        svgTarget.addEventListener('mouseleave', this.endDrag);
+        this.transform = null;
+        this.rootSvgElement = svgTarget;
+        svgTarget.addEventListener('mousedown', e => this.startDrag(e));
+        svgTarget.addEventListener('mousemove', e => this.drag(e));
+        svgTarget.addEventListener('mouseup', e => this.endDrag(e));
+        svgTarget.addEventListener('mouseleave', e => this.endDrag(e));
     }
-    DraggableObject.prototype.startDrag = function (event) {
-        var target = event.target;
-        if (!target) {
+    startDrag(event) {
+        let eTarget = event.target;
+        if (!eTarget) {
             return;
         }
-        if (target.classList.contains('draggable')) {
-            this.selectedElement = target;
-            this.rootSvgElement = target.parentElement;
-            this.offset = DraggableObject.initializeDragging(event, this.selectedElement, this.rootSvgElement);
+        if (eTarget.classList.contains('draggable')) {
+            this.selectedElement = eTarget;
+            this.offset = this.initializeDragging(event);
         }
-        else if (target.parentNode.classList.contains('draggable-group')) {
-            this.selectedElement = target.parentNode;
-            this.rootSvgElement = event.target.parentElement.parentElement;
-            this.offset = DraggableObject.initializeDragging(event, this.selectedElement, this.rootSvgElement);
+        else if (eTarget.parentNode.classList.contains('draggable-group')) {
+            this.selectedElement = eTarget.parentNode;
+            this.offset = this.initializeDragging(event);
         }
-    };
-    DraggableObject.prototype.drag = function (event) {
+    }
+    drag(event) {
         if (!this.rootSvgElement) {
             return;
         }
         if (!this.selectedElement) {
             return;
         }
+        if (!this.transform) {
+            return;
+        }
         event.preventDefault();
-        var coordinate = DraggableObject.getMousePostion(event, this.rootSvgElement);
-        DraggableObject.transform.setTranslate(coordinate.x - this.offset.x, coordinate.y - this.offset.y);
-    };
-    DraggableObject.prototype.endDrag = function (event) {
+        const coordinate = DraggableObject.getMousePostion(event, this.rootSvgElement);
+        this.transform.setTranslate(coordinate.x - this.offset.x, coordinate.y - this.offset.y);
+    }
+    endDrag(event) {
         this.selectedElement = null;
-    };
-    DraggableObject.getMousePostion = function (event, selectedElement) {
-        var svgElement = selectedElement;
-        var ctm = svgElement.getScreenCTM();
+    }
+    static getMousePostion(event, selectedElement) {
+        let svgElement = selectedElement;
+        let ctm = svgElement.getScreenCTM();
         return {
             x: (event.clientX - ctm.e) / ctm.a,
             y: (event.clientY - ctm.f) / ctm.d
         };
-    };
-    DraggableObject.initializeDragging = function (event, selectedElement, rootSvgElement) {
-        var offset = DraggableObject.getMousePostion(event, rootSvgElement);
-        var transforms = selectedElement.transform.baseVal;
-        if (transforms.length === 0 ||
-            transforms.getItem(0).type !== SVGTransform.SVG_TRANSFORM_TRANSLATE) {
-            var translate = rootSvgElement.createSVGTransform();
-            translate.setTranslate(0, 0);
-            selectedElement.transform.baseVal.insertItemBefore(translate, 0);
+    }
+    initializeDragging(event) {
+        if (!this.selectedElement) {
+            return { x: 0, y: 0 };
         }
-        DraggableObject.transform = transforms.getItem(0);
-        offset.x -= DraggableObject.transform.matrix.e;
-        offset.y -= DraggableObject.transform.matrix.f;
+        if (!this.rootSvgElement) {
+            return { x: 0, y: 0 };
+        }
+        let offset = DraggableObject.getMousePostion(event, this.rootSvgElement);
+        let transforms = this.selectedElement.transform.baseVal;
+        if (transforms.numberOfItems === 0 ||
+            transforms.getItem(0).type !== SVGTransform.SVG_TRANSFORM_TRANSLATE) {
+            let translate = this.rootSvgElement.createSVGTransform();
+            translate.setTranslate(0, 0);
+            this.selectedElement.transform.baseVal.insertItemBefore(translate, 0);
+        }
+        this.transform = transforms.getItem(0);
+        offset.x -= this.transform.matrix.e;
+        offset.y -= this.transform.matrix.f;
         return offset;
-    };
-    return DraggableObject;
-}());
+    }
+}
