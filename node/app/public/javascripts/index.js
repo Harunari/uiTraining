@@ -16,9 +16,6 @@ class DraggableObject {
     }
     startDrag(event) {
         let eTarget = event.target;
-        if (!eTarget) {
-            return;
-        }
         if (eTarget.classList.contains('draggable')) {
             this.selectedElement = eTarget;
             this.offset = this.initializeDragging(event);
@@ -39,19 +36,11 @@ class DraggableObject {
             return;
         }
         event.preventDefault();
-        const coordinate = DraggableObject.getMousePostion(event, this.rootSvgElement);
+        const coordinate = this.getMousePostion(event);
         this.transform.setTranslate(coordinate.x - this.offset.x, coordinate.y - this.offset.y);
     }
     endDrag() {
         this.selectedElement = null;
-    }
-    static getMousePostion(event, selectedElement) {
-        let svgElement = selectedElement;
-        let ctm = svgElement.getScreenCTM();
-        return {
-            x: (event.clientX - ctm.e) / ctm.a,
-            y: (event.clientY - ctm.f) / ctm.d
-        };
     }
     initializeDragging(event) {
         if (!this.selectedElement) {
@@ -60,11 +49,11 @@ class DraggableObject {
         if (!this.rootSvgElement) {
             return { x: 0, y: 0 };
         }
-        let offset = DraggableObject.getMousePostion(event, this.rootSvgElement);
-        let transforms = this.selectedElement.transform.baseVal;
+        const offset = this.getMousePostion(event);
+        const transforms = this.selectedElement.transform.baseVal;
         if (transforms.numberOfItems === 0 ||
             transforms.getItem(0).type !== SVGTransform.SVG_TRANSFORM_TRANSLATE) {
-            let translate = this.rootSvgElement.createSVGTransform();
+            const translate = this.rootSvgElement.createSVGTransform();
             translate.setTranslate(0, 0);
             this.selectedElement.transform.baseVal.insertItemBefore(translate, 0);
         }
@@ -72,5 +61,13 @@ class DraggableObject {
         offset.x -= this.transform.matrix.e;
         offset.y -= this.transform.matrix.f;
         return offset;
+    }
+    getMousePostion(event) {
+        const svgElement = this.rootSvgElement;
+        const ctm = svgElement.getScreenCTM();
+        return {
+            x: (event.clientX - ctm.e) / ctm.a,
+            y: (event.clientY - ctm.f) / ctm.d
+        };
     }
 }
